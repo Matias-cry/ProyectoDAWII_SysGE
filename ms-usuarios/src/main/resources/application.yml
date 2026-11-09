@@ -1,0 +1,31 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: ms-usuarios
+  datasource:
+    url: jdbc:mysql://mysql-db:3306/db_usuarios
+    username: root
+    password: ${MYSQL_ROOT_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  web:
+    resources:
+      add-mappings: false
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-minutes: 60

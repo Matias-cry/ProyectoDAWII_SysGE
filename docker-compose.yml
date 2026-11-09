@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql-init.sql:/docker-entrypoint-initdb.d/mysql-init.sql
+      - mysql-data:/var/lib/mysql # <-- CRUCIAL: Mantiene tus datos sin recrear capas basura
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$MYSQL_ROOT_PASSWORD\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sysge-network
+
+  eureka-server:
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    healthcheck:
+      # Si no tienes Actuator, cambia esto por: ["CMD", "curl", "-f", "http://localhost:8761/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sysge-network
+
+  ms-usuarios:
+    build: ./ms-usuarios
+    container_name: ms-usuarios
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - sysge-network
+
+  ms-alumnos:
+    build: ./ms-alumnos
+    container_name: ms-alumnos
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - sysge-network
+
+  ms-cursos:
+    build: ./ms-cursos
+    container_name: ms-cursos
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - sysge-network
+
+  ms-matriculas:
+    build: ./ms-matriculas
+    container_name: ms-matriculas
+    restart: on-failure
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - sysge-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8085:8085"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+    restart: on-failure
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    networks:
+      - sysge-network
+
+  frontend:
+    build: ./frontend-sysge
+    container_name: frontend-sysge
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - sysge-network
+
+networks:
+  sysge-network:
+    driver: bridge
+
+volumes:
+  mysql-data: # <-- Declaración del volumen persistente

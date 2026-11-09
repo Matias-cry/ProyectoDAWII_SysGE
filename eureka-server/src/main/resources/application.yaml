@@ -1,0 +1,21 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    prefer-ip-address: false
+
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+  server:
+    wait-time-in-ms-when-sync-empty: 0 # Arranca de inmediato
+    response-cache-update-interval-ms: 5000 # Actualiza la lista cada 5 segundos

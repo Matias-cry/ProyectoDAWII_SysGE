@@ -1,0 +1,28 @@
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Java / Gradle
+.gradle/
+**/build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Node / Angular
+**/node_modules/
+**/dist/
+**/coverage/
+**/.angular/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+**/application-local.yml
+**/application-local.yaml
+**/application-local.properties
+
+# Logs and local data
+*.log
+mysql-data/

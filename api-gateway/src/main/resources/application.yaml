@@ -1,0 +1,86 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        add-to-chain: true
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:4200"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: ms-usuarios
+          uri: lb://ms-usuarios
+          predicates:
+            - Path=/api/usuarios/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: ms-usuarios-cb
+                fallbackUri: forward:/fallback/usuarios
+        - id: ms-alumnos
+          uri: lb://ms-alumnos
+          predicates:
+            - Path=/api/alumnos/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: ms-alumnos-cb
+                fallbackUri: forward:/fallback/alumnos
+        - id: ms-cursos
+          uri: lb://ms-cursos
+          predicates:
+            - Path=/api/cursos/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: ms-cursos-cb
+                fallbackUri: forward:/fallback/cursos
+        - id: ms-matriculas
+          uri: lb://ms-matriculas
+          predicates:
+            - Path=/api/matriculas/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: ms-matriculas-cb
+                fallbackUri: forward:/fallback/matriculas
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+
+jwt:
+  secret: ${JWT_SECRET}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowSize: 2 # Solo necesita 2 peticiones para evaluar
+        failureRateThreshold: 1 # Si falla UNA vez (1%), abre el circuito
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 1
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 2s # Si tarda mas de 2 segundos, activa fallback
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
